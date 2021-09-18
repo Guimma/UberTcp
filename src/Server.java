@@ -3,6 +3,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server extends Thread {
     private static final int PORT = 7000;
@@ -11,10 +13,12 @@ public class Server extends Thread {
     private static final String OK_STATUS = "OK";
     private static final String WAIT_STATUS = "WAIT";
     private static final String END_STATUS = "END";
-    private static Socket connection;
+    private static List<Socket> connections = new ArrayList<Socket>();
+    private static boolean DEV = true;
+
 
     public Server(Socket clientConnection) {
-        this.connection = clientConnection;
+        this.connections.add(clientConnection);
     }
 
     public static void startServer() throws IOException {
@@ -45,7 +49,8 @@ public class Server extends Thread {
 
     public void run() {
         try {
-            ObjectOutputStream serverOutput = new ObjectOutputStream(connection.getOutputStream());
+            int lastConnection = connections.size() - 1;
+            ObjectOutputStream serverOutput = new ObjectOutputStream(connections.get(lastConnection).getOutputStream());
             while (!hasAvailableCars()) {
                 //ENVIA MENSAGEM DE ESPERA PARA O CLIENTE
                 serverOutput.writeObject(WAIT_STATUS); //DEFINE STATUS DO PACOTE
@@ -61,12 +66,12 @@ public class Server extends Thread {
             serverOutput.flush(); //ENVIA O PACOTE
 
             String rideId = Long.toString(this.getId());
-            String clientId = Integer.toString(connection.getPort());
+            String clientId = Integer.toString(connections.get(lastConnection).getPort());
             System.out.println(String.format("Iniciando viagem numero: %s", rideId));
             System.out.println(String.format("Cliente: %s\n", clientId));
 
             //CRIA UM PACOTE DE ENTRADA PARA RECEBER MENSAGENS, ASSOCIADO A CONEXAO
-            ObjectInputStream dataStream = new ObjectInputStream(connection.getInputStream());
+            ObjectInputStream dataStream = new ObjectInputStream(connections.get(lastConnection).getInputStream());
             System.out.println("Obtendo destino da viagem...");
             String destination = dataStream.readObject().toString(); //RECEBE DESTINO DA VIAGEM
             System.out.println(String.format("Destino definido: %s", destination));
@@ -87,11 +92,14 @@ public class Server extends Thread {
             incrementAvailableCars();
 
             //FINALIZA A CONEXAO
-            connection.close();
+            connections.get(lastConnection).close();
             System.out.println(String.format("Fim da viagem %s com cliente %s...", rideId, clientId));
         }
         catch (Exception e) {
-            System.out.println(e);
+            if(DEV)
+                e.printStackTrace(System.out);
+            else
+                System.out.println(e);
         }
     }
 

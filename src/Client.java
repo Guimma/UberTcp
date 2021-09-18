@@ -4,16 +4,22 @@ import java.net.Socket;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Client {
-    private static final String serverIp = "192.168.18.5";
+    //IP LUCAS
+    //private static final String serverIp = "192.168.18.5";
+    //IP LEO
+    private static final String serverIp = "192.168.100.4";
     private static final int serverPort = 7000;
     private static final int MIN_DURATION = 10000;
-    private static final int MAX_DURATION = 30000;
-    private static final String DESTINATION = "Sergipe";
+    private static final int MAX_DURATION = 15000;
+    private static final String[] DESTINATIONS = {"Pampulha", "Aarao Reis", "Coracao Eucaristico"};
+    private static final int DESTINATION_NUMBER = ThreadLocalRandom.current().nextInt(0, 3);
     private static final Long DURATION = ThreadLocalRandom.current().nextLong(MIN_DURATION, MAX_DURATION + 1);
     private static final String OK_STATUS = "OK";
     private static final String WAIT_STATUS = "WAIT";
     private static final String END_STATUS = "END";
     private static String status;
+    private static boolean DEV = true;
+
 
     private static void run() {
         try
@@ -25,7 +31,7 @@ public class Client {
 
             //CRIA UM PACOTE DE SAIDA PARA ENVIAR MENSAGENS, ASSOCIANDO-O A CONEXÃO
             ObjectOutputStream clientOutput = new ObjectOutputStream(clientSocket.getOutputStream());
-            clientOutput.writeObject(DESTINATION); //DEFINE DESTINO DO CLIENTE
+            clientOutput.writeObject(DESTINATIONS[DESTINATION_NUMBER]); //DEFINE DESTINO DO CLIENTE
             clientOutput.writeObject(DURATION); //DEFINE DURACAO DA VIAGEM
             clientOutput.flush(); //ENVIA O PACOTE
 
@@ -44,7 +50,10 @@ public class Client {
         }
         catch(Exception e) //SE OCORRER ALGUMA EXCECAO, ENTAO DEVE SER TRATADA
         {
-            System.out.println("ERRO: \n" + e);
+            if(DEV)
+                e.printStackTrace(System.out);
+            else
+                System.out.println(e);
         }
     }
 
